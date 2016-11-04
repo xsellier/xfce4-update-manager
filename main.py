@@ -75,6 +75,9 @@ if __name__ == '__main__':
     notification = notify2.Notification("Package updater", "Updates are available", icon)
     notification.add_action("update", "Apply update", update)
     notification.add_action("cancel", "Not now !", close)
+
+    # 5 minutes timeout
+    notification.set_timeout(300000)
     notification.connect("closed", close)
 
     # Ignore SIGINT signal otherwise loop hangs

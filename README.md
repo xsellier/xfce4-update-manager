@@ -25,5 +25,5 @@ python3 main.py
 crontab -e
 
 # Execute every hour
-0 * * * /usr/bin/python3 /home/user/xfce4-update-manager/main.py
+0 * * * * /usr/bin/python3 /home/user/xfce4-update-manager/main.py
 ```

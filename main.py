@@ -10,9 +10,18 @@ import os
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from functools import partial
+import fcntl, sys
 
 scriptDirectory = os.path.abspath(os.path.dirname(__file__))
+pid_file = '{0}/update-manager.pid'.format(scriptDirectory)
+
+fp = open(pid_file, 'w')
+
+try:
+  fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
+except IOError:
+  # another instance is running
+  sys.exit(0)
 
 # Ubuntu's notify-osd doesn't officially support actions. However, it does have
 # a dialog fallback which we can use for this demonstration. In real use, please

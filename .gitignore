@@ -2,3 +2,6 @@ __pycache__/
 build/
 dist/
 xfce4_update_manager.egg-info/
+
+# pid file
+update-manager.pid

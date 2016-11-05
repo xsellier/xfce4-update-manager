@@ -10,7 +10,7 @@ import os
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-
+from functools import partial
 
 scriptDirectory = os.path.abspath(os.path.dirname(__file__))
 
@@ -20,17 +20,12 @@ scriptDirectory = os.path.abspath(os.path.dirname(__file__))
 OVERRIDE_NO_ACTIONS = True
 
 def exec(command):
+  Gtk.main_quit()
 
   try:
-    process = subprocess.Popen(command,
-      stdout = subprocess.PIPE,
-      stderr = subprocess.PIPE,
-    )
+    process = subprocess.Popen(command)
 
     process.wait()
-
-    output = process.stdout.readline().strip().decode('utf8')
-    error = process.stderr.readline().strip().decode('utf8')
 
     if process.returncode == 0:
       # Image URI
@@ -41,18 +36,20 @@ def exec(command):
       # Image URI
       icon = "file://{0}/icons/icon-fail.png".format(scriptDirectory)
 
-      notifyResult(icon, 'Update failed !\n{0}\n{1}'.format(output, error))
+      notifyResult(icon, 'Update failed !')
   except subprocess.CalledProcessError as err:
     # Image URI
     icon = "file://{0}/icons/icon-fail.png".format(scriptDirectory)
 
     notifyResult(icon, 'Error during update: {0}'.format(err))
 
-def update(notification, signal_text):
-  close(notification, signal_text)
-
+def performUpdate(notification=None, signal_text=None):
   # Perform an apt update, then an apt upgrade, if the ugprade fails, it performs an install
   exec(['gksudo', '{0}/scripts/update.sh'.format(scriptDirectory)])
+
+def update(notification, signal_text):
+  close(notification, signal_text)
+  performUpdate()
 
 def notifyResult(icon, message):
   notification = notify2.Notification("Package updater", message, icon)
@@ -60,8 +57,15 @@ def notifyResult(icon, message):
   notification.show()
 
 def close(notification, signal_text=None):
-  Gtk.main_quit()
   notification.close()
+
+def updateFromTray(notification):
+  def performUpdateFromTray(status):
+    status.set_visible(False)
+    notification.close()
+    performUpdate()
+
+  return performUpdateFromTray
 
 if __name__ == '__main__':
   pkgs = aptmanager.get_update_packages()
@@ -76,8 +80,6 @@ if __name__ == '__main__':
     notification.add_action("update", "Apply update", update)
     notification.add_action("cancel", "Not now !", close)
 
-    # 5 minutes timeout
-    notification.set_timeout(300000)
     notification.connect("closed", close)
 
     # Ignore SIGINT signal otherwise loop hangs
@@ -86,4 +88,13 @@ if __name__ == '__main__':
     if not notification.show():
       print("Failed to send notification")
     else:
+      status = Gtk.StatusIcon()
+
+      iconFile = "{0}/icons/icon-update.png".format(scriptDirectory)
+
+      status.set_from_file(iconFile)
+      status.set_visible(True)
+      status.connect('popup-menu', updateFromTray(notification))
+      status.connect('activate', updateFromTray(notification))
+
       Gtk.main()

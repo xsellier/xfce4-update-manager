@@ -5,6 +5,7 @@
 - [python3](https://www.python.org/downloads/)
 - [python3-gi](https://wiki.gnome.org/Projects/PyGObject/)
 - [pypi](https://pypi.python.org/pypi)
+- [gksu](http://www.nongnu.org/gksu/)
 
 ### Install packages
 
